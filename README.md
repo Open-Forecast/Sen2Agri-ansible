@@ -1,2 +1,2 @@
 # Sen2Agri-ansible
-Ansible roles to simply installation of the Sen2Agri-Service
+Ansible roles to simplify the installation process of the Sen2Agri service
