@@ -1,0 +1,17 @@
+# Setup Server for sen2agri services
+- hosts: sen2agri
+  roles:
+    - of-nfs
+    - maja
+    - sen2agri
+    - git
+    - python3
+  vars:
+    sen2agri_version: "2.0.2"
+    remote_install_path: "/home/cloud/sen2agri-{{ sen2agri_version }}"
+    remote_install_source: "/mnt/openforecast-runner/sen2Agri/s2a_setup"
+    db_name: "sen2agri"
+    db_host: "***"
+    db_port: "5432"
+    db_user: "admin"
+    db_pass: "***"
