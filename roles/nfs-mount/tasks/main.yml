@@ -1,0 +1,46 @@
+# Mount a nfs folder
+# Required as some installations files are located there
+# Make sure that the IP of the new VM is allowed to do the nfs mount
+
+#- name: create dummy folders, should be in nfs later
+#  file:
+#    path: "{{ item }}"
+#    state: directory
+#    mode: '0777'
+#  with_items:
+#    - /mnt/archive
+#    - /mnt/upload
+#  become: yes
+
+- name: Mount NFS share
+  become: true
+  mount:
+    fstype: nfs
+    opts: rw
+    src: {{ nfs_src }}
+    dump: 0
+    passno: 0
+    path: {{ nfs_path}}
+    state: mounted
+
+- name: added group to the system
+  group:
+    name: {{ sen2agri_groups }}
+    gid: {{ sen2agri_groups_gid }}
+    state: present
+  become: yes
+
+- name: added group to the system
+  group:
+    name: {{ sen2agri_group }}
+    gid: {{ sen2agri_group_gid }}
+    state: present
+  become: yes
+
+- name: add nfs user
+  user:
+    name: {{ nfs_user }}
+    comment: OF Functional Account
+    uid: {{ nfs_user_uid }}
+    group: {{ sen2agri_group }}
+  become: yes
