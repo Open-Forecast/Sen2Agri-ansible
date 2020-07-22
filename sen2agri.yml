@@ -1,6 +1,7 @@
 # Setup Server for sen2agri services
 - hosts: sen2agri
   roles:
+    - 7zip
     - of-nfs
     - maja
     - sen2agri
