@@ -15,3 +15,5 @@
     db_port: "5432"
     db_user: "admin"
     db_pass: "***"
+    sen2agri_group: "GWDG"
+    sen2agri_groups: "GWDG2"
