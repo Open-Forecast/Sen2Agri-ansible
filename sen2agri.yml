@@ -2,7 +2,7 @@
 - hosts: sen2agri
   roles:
     - 7zip
-    - of-nfs
+    - nfs-mount
     - maja
     - sen2agri
     - git
@@ -16,5 +16,11 @@
     db_port: "5432"
     db_user: "admin"
     db_pass: "***"
-    sen2agri_group: "GWDG"
-    sen2agri_groups: "GWDG2"
+    sen2agri_group: "USER_GROUP"
+    sen2agri_group_gid: "5200"
+    sen2agri_groups: "USER_GROUP2"
+    sen2agri_groups_gid: "5202"
+    nfs_src: "***"
+    nfs_path: "/mnt/sen2agri-data"
+    nfs_user: "sen2agri-user"
+    nfs_user_uid: "***"
