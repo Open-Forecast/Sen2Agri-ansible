@@ -1,8 +1,8 @@
 # Download and install sen2agri
-# 
+#
 # We assume that the install files are available
 # at the remote site. If not add a task to copy the files, e.g.
-## - name: Copy sen2agri install files 
+## - name: Copy sen2agri install files
 ##   copy:
 ##     src: "{{ your local path }}/Sen2Agri-package-{{ sen2agri_version}}.zip"
 ##     dest: "{{ remote_install_path }}"
