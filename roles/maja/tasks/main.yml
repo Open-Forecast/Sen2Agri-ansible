@@ -1,0 +1,19 @@
+# Installing MAYA
+# Should be on the nfs mount, if not add a task to copy the files, e.g.
+## - name: Copy sen2agri install files
+##   copy:
+##     src: "{{ your local path }}/Maja_3.2.2_TM.zip
+##     dest: "{{ remote_install_path }}"
+
+- name: create folder for sen2agri and maja unzipped files
+  file:
+    path: "{{ remote_install_path }}"
+    state: directory
+    mode: '0774'
+
+- name: Extract MAJA package
+  shell: 7z x {{ remote_install_source }}/Maja_3.2.2_TM.zip -o{{ remote_install_path }}/ -y
+
+- name: install MAJA
+  shell: bash {{ remote_install_path }}/Maja-3.2.2-TM/MAJA-3.2.2_TM.run --target /opt/maja
+  become: yes
