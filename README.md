@@ -24,7 +24,7 @@ In order run the script you need to download
 * git: specific for our project to get additional code for postprocessing
 * python3: specific for our project to postprocessing on the data
 
-# Open Issues
+## Open Issues
 
-* 1) Change from local DB to external DB for better maintenance
-* 2) Connect to HPC batch system instead of building own cluster
+1) Change from local DB to external DB for better maintenance
+2) Connect to HPC batch system instead of building own cluster
