@@ -11,20 +11,6 @@
     state: directory
     mode: '0774'
 
-- name: download 7zip
-  get_url:
-    url: "{{ item }}"
-    dest: "{{ remote_install_path }}"
-  with_items:
-    - https://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/epel/7/x86_64/Packages/p/p7zip-16.02-10.el7.x86_64.rpm
-    - https://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/epel/7/x86_64/Packages/p/p7zip-plugins-16.02-10.el7.x86_64.rpm
-
-- name: Install 7zip package
-  yum:
-    name: ["{{ remote_install_path }}/p7zip-16.02-10.el7.x86_64.rpm","{{ remote_install_path }}/p7zip-plugins-16.02-10.el7.x86_64.rpm"]
-    state: present
-  become: yes
-
 - name: Extract gipp-MAJA package
   shell: 7z x {{ remote_install_source }}/Sen2Agri-gipp-maja-3.2.2.zip -o{{ remote_install_path }}/Sen2AgriDistribution -y
   become_user: sen2agri-service
