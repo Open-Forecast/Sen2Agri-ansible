@@ -19,20 +19,15 @@
     dest: "{{ remote_install_path }}"
     remote_src: yes
 
-- name: create folder for srtm and swbd
-  file:
-    path: "{{ item }}"
-    state: directory
-    mode: '0777'
-  with_items:
-    - /mnt/archive/srtm
-    - /mnt/archive/swbd
-
-- name: unzip srtm.zip
-  unarchive:
-    src: "{{ remote_install_source }}/srtm.zip"
-    dest: /mnt/archive/srtm
+- name: copy srmt and swbd
+  copy:
+    src: "{{ item }}"
+    dest: "{{ remote_install_path }}/Sen2AgriDistribution/"
     remote_src: yes
+    force: no
+  with_items:
+    - "{{ remote_install_source }}/srtm.zip"
+    - "{{ remote_install_source }}/swbd.zip"
 
 # Need to delete the folder otherwise the next script will fail
 - name: Ansible delete folder
@@ -46,73 +41,65 @@
   shell: cd {{ remote_install_path }}/Sen2AgriDistribution/install_script && echo "2" | sudo ./sen2agriPlatformInstallAndConfig.sh
   become: yes
 
-- name: fix user rights and group membership
+# Configure user for sentinal data download
+- name: set account for sentinal
+  become: yes
+  become_user: sen2agri-service
+  shell: psql sen2agri -c "UPDATE datasource SET username='{{ sentinal_user }}', passwrd='{{ sentinal_pass }}' WHERE id=3;"
+
+- name: L3 Update for DB
+  become: yes
+  become_user: sen2agri-service
+  shell: "{{ item }}"
+  with_items:
+    - psql sen2agri -c "UPDATE config SET value='/mnt/archive/l3products/{site}/{processor}/' WHERE key='archiver.archive_path';"
+    - psql sen2agri -c "UPDATE config SET value='/mnt/archive/l3products/{site}/{processor}/' WHERE key='processor.l2s1.path';"
+    - psql sen2agri -c "UPDATE config SET value='/mnt/archive/l3products/{site}/{processor}/' WHERE key='s1.preprocessing.path';"
+    - psql sen2agri -c "UPDATE config SET value='/mnt/archive/l3products/L3B_GeneratedModels/' WHERE key='processor.l3b.lai.modelsfolder';"
+
+- name: configure Cloud optimized Geotiff output -- cog
+  become: yes
+  become_user: sen2agri-service
+  shell:  "{{ item }}"
+  with_items:
+    - psql sen2agri -c "UPDATE config SET value=1 WHERE key='demmaccs.cog-tiffs';"
+    - psql sen2agri -c "UPDATE config SET value=1 WHERE key='processor.l3a.cloud_optimized_geotiff_output';"
+    - psql sen2agri -c "UPDATE config SET value=1 WHERE key='processor.l3e.cloud_optimized_geotiff_output';"
+    - psql sen2agri -c "UPDATE config SET value=1 WHERE key='processor.l4a.cloud_optimized_geotiff_output';"
+    - psql sen2agri -c "UPDATE config SET value=1 WHERE key='processor.l4b.cloud_optimized_geotiff_output';"
+
+- name: configure demmacs_launcher for more processes 1
+  replace:
+    path: /usr/share/sen2agri/sen2agri-demmaccs/demmaccs_launcher.py
+    regexp: '"--processes-number-maccs", "\d"'
+    replace: '"--processes-number-maccs", "10"'
+    backup: yes
+  become: yes
+
+- name: configure demmacs_launcher for more processes 2
+  replace:
+    path: /usr/share/sen2agri/sen2agri-demmaccs/demmaccs_launcher.py
+    regexp: "'--processes-number', default=2"
+    replace: "'--processes-number', default=10"
+    backup: yes
+  become: yes
+
+- name: fix apache settings to give access to nfs
   user:
-    name: sen2agri-service
-    group: {{ sen2agri-group }}
-    groups: {{ sen2agri-groups }}
+    name: apache
+    group: GWDG
+    groups: GWDG2
   become: yes
 
-# Next steps are for using an external data base that is already existing and filled with data.
-- name: Stop services
+- name: copy apache nfs config to give apache access to the nfs mount
+  copy:
+    src: roles/sen2agri/files/nfs_apache.conf
+    dest: /etc/httpd/conf.d/
+    mode: '0644'
+  become: yes
+
+- name: restart httpd due to the change in the apache config
   service:
-    name: "{{ item }}"
-    state: stopped
-  with_items:
-    - sen2agri-demmaccs.service
-    - sen2agri-http-listener.service
-    - sen2agri-monitor-agent.service
-    - sen2agri-orchestrator.service
-    - sen2agri-scheduler.service
-    - sen2agri-services.service
-  become: yes
-
-- name: Configure DB connection ConfigParams.php
-  replace:
-    path: /var/www/html/ConfigParams.php
-    regexp: '{{ item.regexp }}'
-    replace: '{{ item.line }}'
-    backup: yes
-  with_items:
-    - { regexp: 'host=localhost', line: 'host={{ db_host }}' }
-    - { regexp: 'password=sen2agri', line: 'password={{ db_pass }}' }
-  become: yes
-
-- name: Configure DB connection sen2agri.conf
-  replace:
-    path: /etc/sen2agri/sen2agri.conf
-    regexp: '{{ item.regexp }}'
-    replace: '{{ item.line }}'
-    backup: yes
-  with_items:
-    - { regexp: 'HostName=localhost', line: 'HostName={{ db_host }}' }
-    - { regexp: 'Password=sen2agri', line: 'Password={{ db_pass }}' }
-  become: yes
-
-- name: Configure DB connection sen2agri-ctl.py
-  replace:
-    path: /usr/bin/sen2agri-ctl.py
-    regexp: '{{ item.regexp }}'
-    replace: '{{ item.line }}'
-    backup: yes
-  with_items:
-    - { regexp: "host='localhost'", line: "host='{{ db_host }}'" }
-    - { regexp: "password='sen2agri'", line: "password='{{ db_pass }}'" }
-  become: yes
-
-- name: Configure DB connection services.properties
-  replace:
-    path: /usr/share/sen2agri/sen2agri-services/config/services.properties
-    regexp: '{{ item.regexp }}'
-    replace: '{{ item.line }}'
-    backup: yes
-  with_items:
-    - { regexp: 'jdbc:postgresql://localhost', line: 'jdbc:postgresql://{{ db_host }}' }
-    - { regexp: 'spring.datasource.password=sen2agri', line: 'spring.datasource.password={{ db_pass }}' }
-  become: yes
-
-- name: start sen2agri services
-  service:
-    name: sen2agri-services.service
-    state: started
+    name: httpd
+    state: reloaded
   become: yes
