@@ -8,7 +8,7 @@
     - git
     - python3
   vars:
-    sen2agri_version: "2.0.2"
+    sen2agri_version: "2.0.3"
     remote_install_path: "/home/cloud/sen2agri-{{ sen2agri_version }}"
     remote_install_source: "/mnt/openforecast-runner/sen2Agri/s2a_setup"
     db_name: "sen2agri"

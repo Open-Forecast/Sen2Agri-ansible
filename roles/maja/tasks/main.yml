@@ -7,13 +7,33 @@
 
 - name: create folder for sen2agri and maja unzipped files
   file:
-    path: "{{ remote_install_path }}"
+    path: "{{ remote_install_path }}/Sen2AgriDistribution/maja"
     state: directory
     mode: '0774'
 
-- name: Extract MAJA package
-  shell: 7z x {{ remote_install_source }}/Maja_3.2.2_TM.zip -o{{ remote_install_path }}/ -y
+- name: download 7zip
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ remote_install_path }}"
+  with_items:
+    - https://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/epel/7/x86_64/Packages/p/p7zip-16.02-10.el7.x86_64.rpm
+    - https://www.mirrorservice.org/sites/dl.fedoraproject.org/pub/epel/7/x86_64/Packages/p/p7zip-plugins-16.02-10.el7.x86_64.rpm
 
-- name: install MAJA
-  shell: bash {{ remote_install_path }}/Maja-3.2.2-TM/MAJA-3.2.2_TM.run --target /opt/maja
+- name: Install 7zip package
+  yum:
+    name: ["{{ remote_install_path }}/p7zip-16.02-10.el7.x86_64.rpm","{{ remote_install_path }}/p7zip-plugins-16.02-10.el7.x86_64.rpm"]
+    state: present
   become: yes
+
+- name: Extract gipp-MAJA package
+  shell: 7z x {{ remote_install_source }}/Sen2Agri-gipp-maja-3.2.2.zip -o{{ remote_install_path }}/Sen2AgriDistribution -y
+  become_user: sen2agri-service
+
+- name: Extract MAJA package
+  shell: 7z x {{ remote_install_source }}/Maja_3.2.2_TM.zip -o{{ remote_install_path }}/Sen2AgriDistribution/maja/ -y
+
+
+### Not required, conflicts with the install script
+#- name: install MAJA
+#  shell: bash {{ remote_install_path }}/Sen2AgriDistribution/maja/Maja-3.2.2-TM/MAJA-3.2.2_TM.run --target /opt/maja
+#  become: yes
